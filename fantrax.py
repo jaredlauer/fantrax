@@ -1,5 +1,6 @@
 from selenium import webdriver
 from selenium.common.exceptions import NoSuchElementException, ElementClickInterceptedException
+from selenium.webdriver.support import expected_conditions as EC
 import time
 import pandas as pd
 import os
@@ -10,15 +11,12 @@ def browser_setup(home_directory):
     download_folder = home_directory
     prefs = {"download.default_directory" : download_folder}
     chromeOptions.add_experimental_option("prefs", prefs)
-
     # Starts browser instance with custom settings for download folder
     browser = webdriver.Chrome(options = chromeOptions)
-
-    # Tells the browser to wait up to 5 seconds when searching for elements, every time
-    browser.implicitly_wait(5)
+    # Tells the browser to wait up to 10 seconds when searching for elements, every time
+    browser.implicitly_wait(10)
     # Important to maximize broswer window so all page elements are loaded
     browser.maximize_window()
-
     return browser
 def login(browser, login_credentials_filepath):
     url_login = 'https://www.fantrax.com/login'
@@ -57,15 +55,11 @@ def navigate_to_team_page(browser, url_team_page):
     period_select_id = 'mat-select-2'
     url = url_team_page
     browser.get(url)
-    time.sleep(1) # Pause to allow page to load
-    #
-    # if period > 0 :
-    #     try:
-    #         current_period = browser.find_elements_by_id(period_select_id)
+    #time.sleep(1) # Pause to allow page to load
 
 def download_team_roster(browser, team_roster_filepath):
     browser.get('https://www.fantrax.com/fantasy/league/qyfm7iiajx6nt5tq/team/roster')
-    time.sleep(3)
+    #time.sleep(3)
     # Delete old roster to prevent duplicates with (1), (2), etc.
     if os.path.exists(team_roster_filepath):
         os.remove(team_roster_filepath)
@@ -99,16 +93,16 @@ def import_team_roster_from_csv(team_roster_filepath):
     # Slices data frame to only include skaters
     df_skaters = df[:end_of_skater_list_index]
     # Adds column headers for skaters
-    df_skaters.columns = ["Position", "Player", "Team", "Eligible", "Status", "Opponent", "Salary", "GP", "G", "A", "Pt", "+/-", "SOG", "STP", "H+B", "GWG+"]
+    df_skaters.columns = ["Position", "Player", "Team", "Eligible", "Status", "Age", "Opponent", "Salary", "GP", "G", "A", "Pt", "+/-", "SOG", "STP", "H+B", "GWG+"]
 
     # Slices data frame to only include goalies
     df_goalies = df[end_of_skater_list_index+3:-1]
     # Resets row indexes to start from 0, drop = True drops extra column created by method
     df_goalies = df_goalies.reset_index(drop = True)
     # Removes extra columns
-    df_goalies = df_goalies.drop(df_goalies.columns[[12, 13, 14, 15]], axis = 1)
+    df_goalies = df_goalies.drop(df_goalies.columns[[13, 14, 15, 16]], axis = 1)
     # Adds column headers for goalies
-    df_goalies.columns = ["Position", "Player", "Team", "Eligible", "Status", "Opponent", "Salary", "GP", "W", "GAA", "SV%", "SHO"]
+    df_goalies.columns = ["Position", "Player", "Team", "Eligible", "Status", "Age", "Opponent", "Salary", "GP", "W", "GAA", "SV%", "SHO"]
 
     print("Skaters: \n", df_skaters)
     print("Goalies: \n", df_goalies)
@@ -249,7 +243,7 @@ def set_lineup(browser, team_roster_filepath):
 # Starts a timer to determine run time
 start_time = time.time()
 
-home_directory = '/home/jaredlauer/github/Fantrax_AutoManager/'
+home_directory = os.getcwd() + '/'
 login_credentials_filepath = home_directory + 'login_credentials.txt'
 team_roster_filepath = home_directory + 'Fantrax-Team-Roster-Just the Beauties HockeyLeague.csv'
 url_team_page = 'https://www.fantrax.com/fantasy/league/qyfm7iiajx6nt5tq/team/roster'
